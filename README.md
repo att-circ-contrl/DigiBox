@@ -12,9 +12,6 @@ to be used as a low-speed logic analyzer.
 (**FIXME** - Integrate pattern generation and more flexible data-logging so
 that this is more useful.)
 
- Ideally it would do most of what the "blink box"
-and "synch box" do. Defer analog for now.)
-
 
 ## Repository Contents
 
