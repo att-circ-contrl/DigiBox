@@ -1,0 +1,52 @@
+(script)  digibox-lib.pl
+Attention Circuits Control Laboratory - wlDigiBox helper scripts
+Helper library for using the Digi-Box from Perl.
+Written by Christopher Thomas.
+Copyright (c) 2020 by Vanderbilt University. This work is licensed under
+the Creative Commons Attribution-ShareAlike 4.0 International License.
+
+
+(var)  $DBOX_tickrate
+Cached configuration values.
+
+
+(sub)  DBOX_QueryTickRate
+This queries the DigiBox to get the RTC rate.
+This updates the cached value.
+Arg 0 is the communications handle.
+Returns the number of RTC ticks per second.
+
+
+(sub)  DBOX_GetCachedTickRate
+This queries the cached RTC tick rate, saved by DBOX_QueryTickRate().
+No arguments.
+Returns the number of RTC ticks per second.
+
+
+(sub)  DBOX_StartCapture
+This tells the DigiBox to start capturing input data.
+Arg 0 is the communications handle.
+Arg 1 is the sampling rate to use, or undef to report input changes.
+No return value.
+
+
+(sub)  DBOX_StopCapture
+This tells the digibox to stop capturing input data.
+Arg 0 is the communications handle.
+No return value.
+
+
+(sub)  DBOX_ParseLogicStreamAsWords
+This parses a digibox capture stream. Pointers to two arrays are returned,
+containing timestamps and data words.
+Arg 0 is a scalar containing text to parse.
+Returns (times, words).
+
+
+(sub)  DBOX_ParseLogicStreamAsBytePairs
+This parses a digibox capture stream, interpreting words as pairs of
+bytes. Pointers to three arrays are returned, containing timestamps in
+seconds, the MS byte stream, and the LS byte stream.
+Arg 0 is a scalar containing text to parse.
+Returns (times, ms bytes, ls bytes).
+
