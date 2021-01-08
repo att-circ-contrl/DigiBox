@@ -17,6 +17,7 @@ that this is more useful.)
 
 * `manual` -- Documentation.
 * `firmware` -- Firmware code. Requires the `NeurAVR` library.
-
+* `libs-perl` -- Libraries used for manipulating the Digi-Box from Perl
+scripts. Requires the `NeurAVR-Util` library.
 
 _This is the end of the file._
