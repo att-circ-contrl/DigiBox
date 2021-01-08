@@ -1,0 +1,141 @@
+# Attention Circuits Control Laboratory - wlDigiBox project
+# Makefile for building with the NeurAVR libraries.
+# Written by Christopher Thomas.
+# Copyright (c) 2020 by Vanderbilt University. This work is licensed under
+# the Creative Commons Attribution-ShareAlike 4.0 International License.
+
+
+#
+# Configuration.
+
+# Base filename.
+PROJNAME=digibox
+
+# Source files.
+
+HDRS=	\
+	$(PROJNAME)_config.h		\
+	$(PROJNAME)_includes.h		\
+	$(PROJNAME)_reader.h
+
+SRCS=	\
+	$(PROJNAME)_main.cpp		\
+	$(PROJNAME)_reader.cpp
+
+OTHER=
+
+# Target name.
+BIN=$(PROJNAME)
+
+# Datestamp.
+# This doesn't evaluate until the macro is expanded, but it still works.
+THISDATE=`date +%Y%m%d`
+
+
+# Compiler flags.
+
+# NOTE - You'll have to override NEURAVRPATH from the command-line to point
+# to your own path.
+NEURAVRPATH=../../neuravr
+
+# Add support for manually-specified tick rates.
+TICKFLAGS=
+ifdef TICKRATE
+TICKFLAGS=-DRTC_TICKS_PER_SECOND=$(TICKRATE)ul
+endif
+
+CFLAGS=\
+	-Os -fno-exceptions				\
+	-I$(NEURAVRPATH)/include -L$(NEURAVRPATH)/lib	\
+	-D__AVR_ATmega2560__ -mmcu=atmega2560		\
+	-DUSE_NEURAVR $(TICKFLAGS)
+
+LFLAGS=-lneurapp-m2560 -lneur-m2560
+
+# Variant flags for the emulated version.
+EMUCFLAGS=\
+	-O2 -Wall -std=c++11 -pthread			\
+	-I$(NEURAVRPATH)/include -L$(NEURAVRPATH)/lib	\
+	-D__AVR_ATmega2560__				\
+	-DUSE_NEURAVR -DNEUREMU $(TICKFLAGS)
+EMULFLAGS=-lneurapp-m2560-emu -lneur-m2560-emu
+
+
+#
+# Targets.
+
+default: clean hex emu
+
+elf: $(BIN).elf
+hex: $(BIN).hex
+asm: $(BIN).asm
+emu: $(BIN)-emu
+
+clean:
+	rm -f $(BIN).elf
+	rm -f $(BIN).hex
+	rm -f $(BIN).asm
+	rm -f $(BIN)-emu
+
+$(BIN).hex: $(BIN).elf
+	avr-objcopy -j .text -j .data -O ihex $(BIN).elf $(BIN).hex
+
+$(BIN).elf: $(SRCS) $(HDRS) $(OTHER)
+	avr-gcc $(CFLAGS) -o $(BIN).elf $(SRCS) $(LFLAGS)
+
+$(BIN).asm: $(BIN).elf
+	avr-objdump -d $(BIN).elf > $(BIN).asm
+
+# NOTE - Use g++, not gcc, for the emulated version.
+# This forces linking against appropriate c++ libraries.
+$(BIN)-emu: $(SRCS) $(HDRS) $(OTHER)
+	g++ $(EMUCFLAGS) -o $(BIN)-emu $(SRCS) $(EMULFLAGS)
+
+
+# This looks for a boot loader (pretending to be a stk500).
+# FIXME - This blithely assumes we're on the first USB serial device and
+# are using Linux Mint 17's naming conventions.
+# NOTE - We need "-D" to cancel flash erase, as the boot loader refuses to
+# erase itself.
+
+burn: $(BIN).hex
+	avrdude -c stk500 -p m2560 -P /dev/ttyACM0 -D -U flash:w:$(BIN).hex:i
+
+burnu: $(BIN).hex
+	avrdude -c stk500 -p m2560 -P /dev/ttyUSB0 -D -U flash:w:$(BIN).hex:i
+
+# This looks for an Atmel AVR ISP Mk 2.
+
+isp: $(BIN).hex
+	avrdude -c avrispv2 -P usb -p m2560 -U flash:w:$(BIN).hex
+
+# FIXME - This blithely assumes we're on the first USB serial device and
+# are using Linux Mint 17's naming conventions.
+# NOTE - Using "-h" for manual echo from "cu", which makes life easier.
+# FIXME - Speed has to be specified manually. Use "test" for 115, "testfast"
+# for 230/500.
+# FIXME - Port depends on whether we're using the Arduino or the FTDI dongle.
+# Use "testu" and "testufast" for USB0 (FTDI).
+# FIXME - If "cu" gives "device in use", use "screen" instead.
+
+test:
+	cu -h -l /dev/ttyACM0 -s 115200
+
+testfast:
+	cu -h -l /dev/ttyACM0 -s 500000
+
+testu:
+	cu -h -l /dev/ttyUSB0 -s 115200
+
+testufast:
+	cu -h -l /dev/ttyUSB0 -s 500000
+
+testscreen:
+	screen /dev/ttyACM0 115200
+
+testscreenfast:
+	screen /dev/ttyACM0 500000
+
+
+#
+# This is the end of the file.
